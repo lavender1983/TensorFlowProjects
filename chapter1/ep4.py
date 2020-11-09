@@ -39,7 +39,7 @@ dataset["Japan"] = (origin == 3) * 1.0
 train_dataset = dataset.sample(frac=0.8, random_state=0)
 test_dataset = dataset.drop(train_dataset.index)
 
-sns.pairplot(train_dataset[["MPG", "Cylinders", "Displacement", "Weight"]], diag_kind="kde")
+# sns.pairplot(train_dataset[["MPG", "Cylinders", "Displacement", "Weight"]], diag_kind="kde")
 
 # show
 # plt.show()
@@ -73,8 +73,90 @@ def build_model():
 
 
 md = build_model()
-print(md.summary())
+# print(md.summary())
 
 example_batch = normed_train_data[:10]
 example_result = md.predict(example_batch)
-print(example_result)
+# print(example_result)
+
+
+class PrintDot(keras.callbacks.Callback):
+
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch % 100 == 0:
+            print(' ')
+        print(".", end='')
+
+
+EPOCHS = 1000
+
+# history = md.fit(normed_train_data,
+#                  train_labels,
+#                  epochs=EPOCHS,
+#                  validation_split=0.2,
+#                  verbose=0,
+#                  callbacks=[PrintDot()])
+
+# hist = pd.DataFrame(history.history)
+# hist["epoch"] = history.epoch
+# print("\n")
+# print(hist.tail())
+
+# patience 值用来检查改进 epochs 的数量
+early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
+
+history = md.fit(normed_train_data,
+                 train_labels,
+                 epochs=EPOCHS,
+                 validation_split=0.2,
+                 verbose=0,
+                 callbacks=[early_stop, PrintDot()])
+
+print("\n" * 2)
+
+
+def plot_history(ht):
+    hist = pd.DataFrame(ht.history)
+    hist['epoch'] = history.epoch
+
+    plt.figure()
+    plt.xlabel('Epoch')
+    plt.ylabel('Mean Abs Error [MPG]')
+    plt.plot(hist['epoch'], hist['mae'], label='Train Error')
+    plt.plot(hist['epoch'], hist['val_mae'], label='Val Error')
+    plt.ylim([0, 5])
+    plt.legend()
+
+    plt.figure()
+    plt.xlabel('Epoch')
+    plt.ylabel('Mean Square Error [$MPG^2$]')
+    plt.plot(hist['epoch'], hist['mse'], label='Train Error')
+    plt.plot(hist['epoch'], hist['val_mse'], label='Val Error')
+    plt.ylim([0, 20])
+    plt.legend()
+    plt.show()
+
+
+# plot_history(history)
+
+loss, mae, mse = md.evaluate(normed_test_data, test_labels, verbose=2)
+
+print("Testing set Mean Abs Error: {:5.2f} MPG".format(mae))
+
+
+test_predictions = md.predict(normed_test_data).flatten()
+# plt.scatter(test_labels, test_predictions)
+# plt.xlabel("True Value [MPG]")
+# plt.ylabel("Predictions [MPG]")
+# plt.axis('equal')
+# plt.axis('square')
+# plt.ylim([0, plt.xlim()[1]])
+# plt.ylim([0, plt.ylim()[1]])
+# _ = plt.plot([-100, 100], [-100, 100])
+
+error = test_predictions - test_labels
+plt.hist(error, bins=25)
+plt.xlabel("Prediction Error [MPG]")
+plt.ylabel("Count")
+
+plt.show()
