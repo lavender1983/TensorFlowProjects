@@ -5,3 +5,5 @@ chapter1/save_model
 chapter1/training_1
 chapter1/training_2
 chapter1/my_dir
+chapter2/cache/
+chapter2/*.tfrec
