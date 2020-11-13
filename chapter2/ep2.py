@@ -16,7 +16,6 @@ gpus = tf.config.list_physical_devices('GPU')
 print(gpus)
 tf.config.experimental.set_memory_growth(gpus[0], True)
 
-
 DIRECTORY_URL = 'https://storage.googleapis.com/download.tensorflow.org/data/illiad/'
 FILE_NAMES = ['cowper.txt', 'derby.txt', 'butler.txt']
 
